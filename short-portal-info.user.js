@@ -10,6 +10,8 @@
 // @match          https://*.ingress.com/intel*
 // @match          http://*.ingress.com/intel*
 // @grant          none
+// @updateURL      https://github.com/Eccenux/iitc-plugin-short-portal-info/raw/master/short-portal-info.meta.js
+// @downloadURL    https://github.com/Eccenux/iitc-plugin-short-portal-info/raw/master/short-portal-info.user.js
 // ==/UserScript==
 
 function wrapper(plugin_info) {
