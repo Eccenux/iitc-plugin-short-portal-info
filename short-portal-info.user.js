@@ -3,8 +3,8 @@
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @name           IITC plugin: Short portal info
 // @category       Misc
-// @version        0.2.1
-// @description    [0.2.1] Shows small box with a basic portal information. This is similar to mobile info.
+// @version        0.2.2
+// @description    [0.2.2] Shows small box with a basic portal information. This is similar to mobile info.
 // @include        https://*.ingress.com/intel*
 // @include        http://*.ingress.com/intel*
 // @match          https://*.ingress.com/intel*
@@ -187,8 +187,8 @@ function renderMods(details) {
 		} else {
 			shortName = mod.name.replace(/[^A-Z]+/g, '');
 		}
-		var rarityLong = mod.rarity.toLowerCase();
-		html += `<span title="${mod.name} (${rarityLong})">${shortName}`;
+		var rarityLong = mod.rarity.toLowerCase().replace(/_/, ' ');
+		html += `<span title="${mod.name} (${rarityLong}) [${mod.owner}]">${shortName}`;
 		
 		// rarity
 		if (hasRarity) {
