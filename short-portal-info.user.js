@@ -83,72 +83,76 @@ var pluginCss = `
 /**
 	Render portal for the short info.
 */
-function renderPortal(data) {
-	var guid = data.selectedPortalGuid;
-	if(!window.portals[guid]) return;
-
-	var data = window.portals[selectedPortal].options.data;
+function renderPortal(guid) {
 	var details = window.portalDetail.get(guid);
-
-	var lvl = data.level;
-	if(data.team === "NEUTRAL")
-		var t = '<span class="portallevel">L0</span>';
-	else
-		var t = '<span class="portallevel" style="background: '+COLORS_LVL[lvl]+';">L' + lvl + '</span>';
-
-	var percentage = data.health;
-	if(details) {
-		var totalEnergy = getTotalPortalEnergy(details);
-		if(getTotalPortalEnergy(details) > 0) {
-			percentage = Math.floor(getCurrentPortalEnergy(details) / totalEnergy * 100);
-		}
+	if (!details) {
+		return '';
 	}
-	t += ' ' + percentage + '% ';
-	t += data.title;
 
-	if(details) {
-		var l,v,max,perc;
-		var eastAnticlockwiseToNorthClockwise = [2,1,0,7,6,5,4,3];
+	console.log('details', details);
 
-		for(var ind=0;ind<8;ind++)
-		{
-			if (details.resonators.length == 8) {
-				var slot = eastAnticlockwiseToNorthClockwise[ind];
-				var reso = details.resonators[slot];
-			} else {
-				var slot = null;
-				var reso = ind < details.resonators.length ? details.resonators[ind] : null;
-			}
+	var lvl = details.level;
+	if(details.team === "NEUTRAL")
+		var html = '<span class="portallevel">L0</span>';
+	else
+		var html = '<span class="portallevel" style="background: '+COLORS_LVL[lvl]+';">L' + lvl + '</span>';
 
-			var className = TEAM_TO_CSS[getTeam(details)];
-			if(slot !== null && OCTANTS[slot] === 'N')
-				className += ' north'
-			if(reso) {
-				l = parseInt(reso.level);
-				v = parseInt(reso.energy);
-				max = RESO_NRG[l];
-				perc = v/max*100;
-			} else {
-				l = 0;
-				v = 0;
-				max = 0;
-				perc = 0;
-			}
+	html += ` ${details.health}% [${details.owner}] ${details.title}`;
+	
+	html += renderResonators(details);
 
-			t += '<div class="resonator '+className+'" style="border-top-color: '+COLORS_LVL[l]+';left: '+(100*ind/8.0)+'%;">';
-			t += '<div class="filllevel" style="width:'+perc+'%;"></div>';
-			t += '</div>'
+	return html;
+}
+
+/**
+	Render portal resonators.
+*/
+function renderResonators(details) {
+	var l,v,max,perc;
+	var eastAnticlockwiseToNorthClockwise = [2,1,0,7,6,5,4,3];
+
+	var html = '';
+	for(var ind=0; ind<8 ;ind++)
+	{
+		if (details.resonators.length == 8) {
+			var slot = eastAnticlockwiseToNorthClockwise[ind];
+			var reso = details.resonators[slot];
+		} else {
+			var slot = null;
+			var reso = ind < details.resonators.length ? details.resonators[ind] : null;
 		}
+
+		var className = TEAM_TO_CSS[getTeam(details)];
+		if(slot !== null && OCTANTS[slot] === 'N')
+			className += ' north'
+		if(reso) {
+			l = parseInt(reso.level);
+			v = parseInt(reso.energy);
+			max = RESO_NRG[l];
+			perc = v/max*100;
+		} else {
+			l = 0;
+			v = 0;
+			max = 0;
+			perc = 0;
+		}
+
+		html += `
+			<div class="resonator ${className}" style="border-top-color: ${COLORS_LVL[l]}; left: ${(100*ind/8.0)}%;">
+				<div class="filllevel" style="width:${perc}%;"></div>
+			</div>
+		`;
 	}
 	
-	return t;
+	return html;
 }
 
 /**
 	Function to run when current portal change.
 */
-function updatePortalInfo(portalData) {
-	var html = renderPortal(portalData);
+function updatePortalInfo(data) {
+	var guid = data.selectedPortalGuid;
+	var html = renderPortal(guid);
 	$('#shortportalinfo').html(html);
 }
 
@@ -158,7 +162,7 @@ var setup = function() {
 	if(isSmartphone()) return;
 	
 	// html
-	$('#updatestatus').prepend('<div id="shortportalinfo"></div>');
+	$('#updatestatus').prepend('<div id="shortportalinfo"></div>').css('width', '550px');
 	$('#shortportalinfo').click(function(){
 		$('#sidebartoggle').click();
 	});
