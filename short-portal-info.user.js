@@ -3,8 +3,8 @@
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @name           IITC plugin: Short portal info
 // @category       Misc
-// @version        0.2.0
-// @description    [0.2.0] Shows small box with a basic portal information. This is similar to mobile info.
+// @version        0.2.1
+// @description    [0.2.1] Shows small box with a basic portal information. This is similar to mobile info.
 // @include        https://*.ingress.com/intel*
 // @include        http://*.ingress.com/intel*
 // @match          https://*.ingress.com/intel*
@@ -22,11 +22,14 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 	CSS based on #mobileinfo CSS.
 */
 var pluginCss = `
+	#shortportalinfo,
+	#innerstatus {
+		padding: 4px 0;
+	}
 	#shortportalinfo {
 		float: left;
 		width: 50%;
 		position: relative;
-		padding: 4px 0;
 		box-sizing: border-box;
 	}
 	#shortportalinfo .basicinfo {
@@ -116,16 +119,27 @@ function renderPortal(guid) {
 	console.log('details', details);
 
 	var lvl = details.level;
-	if(details.team === "NEUTRAL")
-		var html = '<span class="portallevel">L0</span>';
-	else
-		var html = '<span class="portallevel" style="background: '+COLORS_LVL[lvl]+';">L' + lvl + '</span>';
-
-	html += `<div class="basicinfo">${details.health}% [${details.owner}] ${details.title}</div>`;
+	var isNeutral = details.resCount == 0 ? true : false;
+	var html;
+	if(isNeutral) {
+		html = '<span class="portallevel">L0</span>';
+	}
+	else {
+		html = '<span class="portallevel" style="background: '+COLORS_LVL[lvl]+';">L' + lvl + '</span>';
+	}
 	
-	html += renderResonators(details);
+	if(isNeutral) {
+		html += `<div class="basicinfo">${details.title}</div>`;
+	}
+	else {
+		html += `<div class="basicinfo">${details.health}% [${details.owner}] ${details.title}</div>`;
+	}
 	
-	html += renderMods(details);
+	if(!isNeutral) {
+		html += renderResonators(details);
+		
+		html += renderMods(details);
+	}
 
 	return html;
 }
