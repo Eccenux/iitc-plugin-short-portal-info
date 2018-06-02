@@ -3,8 +3,8 @@
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @name           IITC plugin: Short portal info
 // @category       Misc
-// @version        0.0.1
-// @description    [0.0.1] Shows small box with a basic portal information. This is similar to mobile info.
+// @version        0.2.0
+// @description    [0.2.0] Shows small box with a basic portal information. This is similar to mobile info.
 // @include        https://*.ingress.com/intel*
 // @include        http://*.ingress.com/intel*
 // @match          https://*.ingress.com/intel*
@@ -25,19 +25,43 @@ var pluginCss = `
 	#shortportalinfo {
 		float: left;
 		width: 50%;
+		position: relative;
+		padding: 4px 0;
+		box-sizing: border-box;
+	}
+	#shortportalinfo .basicinfo {
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		overflow: hidden;
-		position:relative;
-		padding: 4px 0;
-		-moz-box-sizing: border-box;
-		-webkit-box-sizing: border-box;
-		box-sizing: border-box;
+		padding-left: .5em;
 	}
 
+	#shortportalinfo .mod-list:empty {
+		display: none;
+	}
+	#shortportalinfo .mod-list {
+		position: absolute;
+		left: 0;
+		height: 2em;
+		top: calc(-2em - 4px);
+		box-sizing: border-box;
+		background-color: rgba(8, 48, 78, 0.9);
+		border: 1px solid #20A8B1;
+		border-bottom-style: none;
+	}
+	#shortportalinfo .mod-list span {
+		background-color: rgba(60, 134, 191, 0.3);
+		display: inline-block;
+		border: 1px solid black;
+		margin: 1px 2px;
+		padding: 2px;
+		box-sizing: border-box;
+	}
+	
 	#shortportalinfo .portallevel {
 		padding: 0 0.25em;
 		color: #FFF;
+		float: left;
 	}
 
 	#shortportalinfo .resonator {
@@ -97,11 +121,71 @@ function renderPortal(guid) {
 	else
 		var html = '<span class="portallevel" style="background: '+COLORS_LVL[lvl]+';">L' + lvl + '</span>';
 
-	html += ` ${details.health}% [${details.owner}] ${details.title}`;
+	html += `<div class="basicinfo">${details.health}% [${details.owner}] ${details.title}</div>`;
 	
 	html += renderResonators(details);
+	
+	html += renderMods(details);
 
 	return html;
+}
+
+// name map + rarity groupping
+var modNameMap = {
+	withRarity : {
+		'heat sink' : 'HS',
+		'portal shield' : 'Sh',
+		'multi-hack' : 'MH',
+		'link amp' : 'LA',
+	},
+	singleRarity : {
+		'aegis shield' : 'Aegis',
+		'turret' : 'Turret',
+		'force amp' : 'FAmp',
+		'ito en transmuter (+)' : 'ITO+',
+		'ito en transmuter (-)' : 'ITO-',
+	},
+};
+
+/**
+	Render portal mods.
+*/
+function renderMods(details) {
+	if (!details.mods || details.mods.length < 1) {
+		return '';
+	}
+	var html = '';
+	for(var i = 0; i < details.mods.length; i++) {
+		var mod = details.mods[i];
+		if (!mod) {
+			continue;
+		}
+		var lowName = mod.name.toLowerCase();
+		
+		// name and rarity group check
+		var hasRarity = true;
+		var shortName;
+		if (lowName in modNameMap.withRarity) {
+			shortName = modNameMap.withRarity[lowName];
+		} else if (lowName in modNameMap.singleRarity) {
+			shortName = modNameMap.singleRarity[lowName];
+			hasRarity = false;
+		} else {
+			shortName = mod.name.replace(/[^A-Z]+/g, '');
+		}
+		var rarityLong = mod.rarity.toLowerCase();
+		html += `<span title="${mod.name} (${rarityLong})">${shortName}`;
+		
+		// rarity
+		if (hasRarity) {
+			// 'VERY_RARE' -> 'VR'
+			var rarity = mod.rarity.replace(/([A-Z])[A-Z]+/g, '$1').replace(/[^A-Z]+/g, '');
+			html += ` ${rarity}`;
+		}
+		html += '</span>';
+	}
+
+	return `<div class="mod-list">${html}</div>`;
 }
 
 /**
@@ -110,9 +194,10 @@ function renderPortal(guid) {
 function renderResonators(details) {
 	var l,v,max,perc;
 	var eastAnticlockwiseToNorthClockwise = [2,1,0,7,6,5,4,3];
+	var teamClass = TEAM_TO_CSS[getTeam(details)];
 
 	var html = '';
-	for(var ind=0; ind<8 ;ind++)
+	for(var ind=0; ind<8; ind++)
 	{
 		if (details.resonators.length == 8) {
 			var slot = eastAnticlockwiseToNorthClockwise[ind];
@@ -122,9 +207,10 @@ function renderResonators(details) {
 			var reso = ind < details.resonators.length ? details.resonators[ind] : null;
 		}
 
-		var className = TEAM_TO_CSS[getTeam(details)];
-		if(slot !== null && OCTANTS[slot] === 'N')
+		var className = teamClass;
+		if(slot !== null && OCTANTS[slot] === 'N') {
 			className += ' north'
+		}
 		if(reso) {
 			l = parseInt(reso.level);
 			v = parseInt(reso.energy);
